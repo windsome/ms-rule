@@ -3,15 +3,8 @@
   "server_port": 3106,
   "domain": "m.h5ren.com",
   "redis": {
-    "url": "redis://localhost:6379/6"
-  },
-  "mongodb": {
-    "url": "mongodb://admin:admin@localhost:27017/iot1g-usercenter?authSource=admin",
-    "cached": {
-      "redis": "redis://localhost:6379/2",
-      "bull": "redis://localhost:6379/2"
-    },
-    "limit": 20
+    "url": "redis://localhost:6379/6",
+    "description": "注意与ms-ctwingiot用同一个url,需共用部分key:SVR*,UC*"
   },
   "websocket": {
     "port": 3801
