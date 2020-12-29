@@ -1,0 +1,61 @@
+{
+  "auth": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjIzODgzY2Q5MjAxZDBmYjA2NDc3NzIiLCJpYXQiOjE1OTkyMTE5MDMsImV4cCI6MTU5OTgxNjcwM30.hb0BQf49O_gS5MUiuLeO9sdAfawxvSTQ-FlyN0-lN0E",
+    "type": "auth"
+  },
+  "logout": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjIzODgzY2Q5MjAxZDBmYjA2NDc3NzIiLCJpYXQiOjE1OTkyMTE5MDMsImV4cCI6MTU5OTgxNjcwM30.hb0BQf49O_gS5MUiuLeO9sdAfawxvSTQ-FlyN0-lN0E",
+    "type": "logout"
+  },
+  "session_create": {
+    "type": "session_create",
+    "creator": "5f23883cd9201d0fb0647771",
+    "members": ["5f23883cd9201d0fb0647771", "5f23883cd9201d0fb0647772"]
+  },
+  "session_add_user": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjIzODgzY2Q5MjAxZDBmYjA2NDc3NzIiLCJpYXQiOjE1OTkyMTE5MDMsImV4cCI6MTU5OTgxNjcwM30.hb0BQf49O_gS5MUiuLeO9sdAfawxvSTQ-FlyN0-lN0E",
+    "type": "session_add_user",
+    "members": ["5f23883cd9201d0fb0647773"],
+    "sid": "5f55894f5102ab2274d4c45e"
+  },
+  "session_remove_user_not_root": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjIzODgzY2Q5MjAxZDBmYjA2NDc3NzIiLCJpYXQiOjE1OTkyMTE5MDMsImV4cCI6MTU5OTgxNjcwM30.hb0BQf49O_gS5MUiuLeO9sdAfawxvSTQ-FlyN0-lN0E",
+    "type": "session_remove_user",
+    "members": ["5f23883cd9201d0fb0647773"],
+    "sid": "5f55894f5102ab2274d4c45e"
+  },
+  "session_remove_user_root": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjIzODgzY2Q5MjAxZDBmYjA2NDc3NzEiLCJpYXQiOjE1OTk0NDY5NDIsImV4cCI6MTYwMDA1MTc0Mn0.q1EG7DcCEWlAuEjetCrgMOC2XV9ZGmgUN4JPiBGyFHI",
+    "type": "session_remove_user",
+    "members": ["5f23883cd9201d0fb0647773"],
+    "sid": "5f55894f5102ab2274d4c45e"
+  },
+
+  "session_exit": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjIzODgzY2Q5MjAxZDBmYjA2NDc3NzMiLCJpYXQiOjE1OTk0NDcyMDksImV4cCI6MTYwMDA1MjAwOX0.zkswnViFvUJ0bia1cI2a_Rdr2OH_SD93qTC1cgjatu0",
+    "type": "session_exit",
+    "sid": "5f55894f5102ab2274d4c45e"
+  },
+
+  "说明": {
+    "创建者": "771的用户",
+    "邀请者": "772的用户",
+    "受邀者": "773的用户",
+    "退出者": "773的用户",
+    "other": "对应的token都是对的,可直接测试"
+  },
+
+  "msg_send": {
+    "clientMsgId": "111111",
+    "type": "msg_send",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjIzODgzY2Q5MjAxZDBmYjA2NDc3NzIiLCJpYXQiOjE1OTkyMTE5MDMsImV4cCI6MTU5OTgxNjcwM30.hb0BQf49O_gS5MUiuLeO9sdAfawxvSTQ-FlyN0-lN0E",
+    "content": { "text": "test text" },
+    "sid": "5f55894f5102ab2274d4c45e"
+  },
+  "msg_recv": {
+    "recvId": "5f55d21be6f4e65ba0795280",
+    "type": "msg_recv",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjIzODgzY2Q5MjAxZDBmYjA2NDc3NzIiLCJpYXQiOjE1OTkyMTE5MDMsImV4cCI6MTU5OTgxNjcwM30.hb0BQf49O_gS5MUiuLeO9sdAfawxvSTQ-FlyN0-lN0E",
+    "sid": "5f55894f5102ab2274d4c45e"
+  }
+}
