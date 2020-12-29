@@ -10,8 +10,6 @@ let auth = {
   type: 'auth'
 };
 let logout = {
-  token:
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZjJlY2JlNzZiNjhiNDFlZGUzNzlkMzkiLCJpYXQiOjE1OTkxNDkxODMsImV4cCI6MTU5OTc1Mzk4M30.N1rCd7tNVX6OGmhAcLDuLo-iaUqjiZ1f2ktKo5Ib7ck',
   type: 'logout'
 };
 let session_create = {
