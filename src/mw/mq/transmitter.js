@@ -41,7 +41,7 @@ export function createMqTransmitter(
       key,
       Buffer.from(strMsg)
     );
-    debug('send:', opts, msg, result);
+    debug('send:', opts, key, result, msg);
     return true;
   };
 }

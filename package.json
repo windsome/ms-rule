@@ -1,6 +1,6 @@
 {
   "name": "ms-websocket",
-  "description": "websocket服务,需要redis配合做到无状态",
+  "description": "websocket服务,无状态,需要依赖于ms-ctwingiot先运行",
   "version": "1.1.1",
   "private": true,
   "dependencies": {

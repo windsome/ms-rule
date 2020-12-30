@@ -24,6 +24,7 @@
  *  type: '_svr_heatbeat',
  *  _sys: {
  *    serverId: [WSSERVER_UUID1]
+ *    clients: [{ip1,port1},{ip2,port2}] //客户端连接数组,也需要心跳保活
  *  }
  * }
  * 2. websocket服务器断开连接.
@@ -111,11 +112,18 @@ export function createServer(opts = { port: 8080, processor: null }) {
 async function serverHeatbeat(opts) {
   let { serverId, processor } = opts;
   while (bServerHeatbeat) {
+    let clients = [];
+    let keys = Object.getOwnPropertyNames(client_connections);
+    for (let i = 0; i < keys.length; i++) {
+      let client_key = keys[i];
+      let client = client_connections[client_key];
+      clients.push({ip: client.ip, port: client.port});
+    }
     await processor(
-      { type: '_svr_heartbeat', _sys: { serverId } },
+      { type: '_svr_heartbeat', _sys: { serverId, clients } },
       MQ_SVR_KEY
     );
-    await sleep(60 * 1000); // 每隔1分钟刷新.
+    await sleep(20 * 1000); // 每隔1分钟刷新.
   }
 }
 
