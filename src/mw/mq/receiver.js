@@ -11,7 +11,7 @@ async function createConsumer(
   opts = {
     url: 'localhost',
     exchange: 'topic_im',
-    key: 'im.processor',
+    key: 'im.wsserver.[serverId]',
     processor: null
   }
 ) {

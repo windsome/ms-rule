@@ -65,7 +65,7 @@ export default function createService() {
   createMqReceiver({
     url: mqcfg.url,
     exchange: mqcfg.exchange,
-    key: 'im.transceiver.' + serverId,
+    key: 'im.wsserver.' + serverId,
     processor: sendClientMessage
   });
 

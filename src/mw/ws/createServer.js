@@ -248,8 +248,17 @@ async function handleClientMessage(message, opts) {
 }
 
 export function sendClientMessage(message) {
-  let { _sys, ...msg } = message;
-  let { ip, port } = _sys;
+  let strmsg = message.content.toString();
+  debug('sendClientMessage Received', strmsg);
+  let msgobj = null;
+  try {
+    msgobj = JSON.parse(strmsg);
+  } catch (error) {
+    debug('error JSON.parse() message!')
+    return false;
+  }
+  let { _sys, ...msg } = msgobj;
+  let { ip, port } = _sys || {};
   if (!ip || !port) {
     debug('error! no ip or port!');
     return false;
@@ -261,8 +270,7 @@ export function sendClientMessage(message) {
     debug('error! ws is null!', { ip, port });
     return false;
   }
-  let strmsg = JSON.stringify(msg);
-  debug('sendClientMessage', message);
+  strmsg = JSON.stringify(msg);
   ws.send(strmsg);
   return true;
 }
