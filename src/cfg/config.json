@@ -4,7 +4,8 @@
   "server_port": 3106,
   "domain": "m.h5ren.com",
   "websocket": {
-    "port": 3801
+    "port": 3801,
+    "heartbeat_timeout": 60000
   },
   "mq": {
     "type": "rabbitmq",

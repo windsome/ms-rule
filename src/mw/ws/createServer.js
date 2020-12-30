@@ -83,13 +83,15 @@ let bServerHeatbeat = true; // 服务器心跳,每隔一分钟执行一次.
  * 创建websocket服务器
  * @param {json} opts {port:服务器端口,processor:消息处理函数,将消息发送到MQ}
  */
-export function createServer(opts = { port: 8080, processor: null }) {
-  let { port, processor } = opts;
+export function createServer(
+  opts = { port: 8080, heartbeat_timeout: 60000, processor: null }
+) {
+  let { port, processor, heartbeat_timeout } = opts;
   const server = new WebSocket.Server({ port });
   let serverId = uuidv4().replace(/-/g, ''); // 去掉'-'的uuid字符串
   debug('about to create websocket_server uuid=' + serverId);
 
-  serverHeatbeat({ serverId, processor });
+  serverHeatbeat({ serverId, heartbeat_timeout, processor });
   server.on('open', () => {
     debug('ok! websocket_server openend! uuid=', serverId);
   });
@@ -110,7 +112,8 @@ export function createServer(opts = { port: 8080, processor: null }) {
 }
 
 async function serverHeatbeat(opts) {
-  let { serverId, processor } = opts;
+  let { serverId, heartbeat_timeout, processor } = opts;
+  if (!heartbeat_timeout) heartbeat_timeout = 60000;
   while (bServerHeatbeat) {
     let clients = [];
     let keys = Object.getOwnPropertyNames(client_connections);
@@ -123,7 +126,7 @@ async function serverHeatbeat(opts) {
       { type: '_svr_heartbeat', _sys: { serverId, clients } },
       MQ_SVR_KEY
     );
-    await sleep(20 * 1000); // 每隔1分钟刷新.
+    await sleep(heartbeat_timeout); // 每隔1分钟发送心跳保活.
   }
 }
 

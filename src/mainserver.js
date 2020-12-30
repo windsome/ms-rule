@@ -40,9 +40,9 @@ function wrapOps() {
 
 // 创建services
 export default function createService() {
-  let port = config.websocket && config.websocket.port;
-  if (!port) {
-    throw new Error('cfg: no websocket.port!');
+  let wscfg = config.websocket;
+  if (!wscfg) {
+    throw new Error('cfg: no config.websocket!');
   }
   let mqcfg = config.mq;
   if (!mqcfg) {
@@ -58,7 +58,7 @@ export default function createService() {
     exchange: mqcfg.exchange
   }); // 得到发送往MQ的发送器.
   debug('初始化websocket服务器');
-  let serverId = createWebsocketServer({ port, processor: sender });
+  let serverId = createWebsocketServer({ ...wscfg, processor: sender });
   debug(
     '创建MQ接收器,接收来自业务处理服务器发送过来的消息,通过websocket发送给客户端'
   );
