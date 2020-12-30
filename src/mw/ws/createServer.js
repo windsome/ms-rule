@@ -210,6 +210,7 @@ function handleClientError(opts) {
  */
 async function handleClientMessage(message, opts) {
   let { ip, port, ws, serverId, processor } = opts;
+  debug('handleClientMessage', message, JSON.stringify({ ip, port, serverId }));
   let msg = null;
   try {
     msg = JSON.parse(message);
@@ -236,7 +237,7 @@ async function handleClientMessage(message, opts) {
       break;
     }
   }
-  debug('handleClientMessage: ', message, { ip, port, serverId }, result);
+  debug('+handleClientMessage', result);
   return result;
 
   // // 广播消息给所有客户端
@@ -249,7 +250,7 @@ async function handleClientMessage(message, opts) {
 
 export function sendClientMessage(message) {
   let strmsg = message.content.toString();
-  debug('sendClientMessage Received', strmsg);
+  debug('sendClientMessage Received:', strmsg);
   let msgobj = null;
   try {
     msgobj = JSON.parse(strmsg);
@@ -272,5 +273,6 @@ export function sendClientMessage(message) {
   }
   strmsg = JSON.stringify(msg);
   ws.send(strmsg);
+  debug('+sendClientMessage ok!');
   return true;
 }
