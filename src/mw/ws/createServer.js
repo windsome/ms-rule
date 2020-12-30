@@ -117,7 +117,7 @@ async function serverHeatbeat(opts) {
     for (let i = 0; i < keys.length; i++) {
       let client_key = keys[i];
       let client = client_connections[client_key];
-      clients.push({ip: client.ip, port: client.port});
+      clients.push({ ip: client.ip, port: client.port });
     }
     await processor(
       { type: '_svr_heartbeat', _sys: { serverId, clients } },
@@ -131,10 +131,7 @@ async function handleServerClose(opts) {
   bServerHeatbeat = false;
   let { serverId, processor } = opts;
   debug('websocket_server closed! uuid=' + serverId);
-  await processor(
-    { type: '_svr_close', _sys: { serverId } },
-    MQ_SVR_KEY
-  );
+  await processor({ type: '_svr_close', _sys: { serverId } }, MQ_SVR_KEY);
   // 清空connections
   client_connections = {};
 }
@@ -255,7 +252,7 @@ export function sendClientMessage(message) {
   try {
     msgobj = JSON.parse(strmsg);
   } catch (error) {
-    debug('error JSON.parse() message!')
+    debug('error JSON.parse() message!');
     return false;
   }
   let { _sys, ...msg } = msgobj;
