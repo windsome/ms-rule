@@ -11,12 +11,7 @@
  *   [client_ip1]##[client_port1]: {ip:client_ip1, port:client_port1, ws[, userId:user_id1, token]},
  *   [client_ip2]##[client_port2]: {ip:client_ip2, port:client_port2, ws[, userId:user_id2, token]},
  * }
-//  * 授权后的连接列表,根据用户id进行分组(1个用户不同端登录会有不同连接):
-//  * authed_connections = {
-//  *   [user_id1]: [[client_ip1]##[client_port1],[client_ip2]##[client_port2], ...],
-//  *   [user_id2]: [[client_ip3]##[client_port3],[client_ip4]##[client_port4], ...],
-//  * }
- * redis中客户端数据结构(消息处理服务器和本服务器(websocket服务器)通过redis中此键达成无状态服务器)
+ * 授权后的连接列表,redis中客户端数据结构(消息处理服务器和本服务器(websocket服务器)通过redis中此键达成无状态服务器)
  * authed_connections_in_redis: {
  *   UC##[user_id1]##[WSSERVER_UUID1]##[client_ip1]##[client_port1]: [WSSERVER_UUID1],
  *   UC##[user_id2]##[WSSERVER_UUID2]##[client_ip2]##[client_port2]: [WSSERVER_UUID2],
@@ -24,7 +19,21 @@
  *   UC##[user_id4]##[WSSERVER_UUID1]##[client_ip4]##[client_port4]: [WSSERVER_UUID1],
  * }
  * 系统消息:
- * 1. 连接关闭消息,发送给MQ,由业务服务器处理.
+ * 1. websocket服务器心跳消息保活,用于延迟SVR*有效期.
+ * {
+ *  type: '_svr_heatbeat',
+ *  _sys: {
+ *    serverId: [WSSERVER_UUID1]
+ *  }
+ * }
+ * 2. websocket服务器断开连接.
+ * {
+ *  type: '_svr_close',
+ *  _sys: {
+ *    serverId: [WSSERVER_UUID1]
+ *  }
+ * }
+ * 3. websocket客户端连接关闭消息
  * {
  *  type: '_connection_close',
  *  _sys: {
@@ -33,11 +42,25 @@
  *    serverId: [WSSERVER_UUID1]
  *  }
  * }
- * 
- * 可能存在的其他消息:
- * 心跳消息(确保客户端连接活动):
+ * 业务消息:
+ * 1. 鉴权/登录消息:
  * {
- *  type: 'heatbeat'
+ *  type:'auth'
+ *  token, // token用来鉴权
+ *  _sys: {
+ *    ip: '客户端IP',
+ *    port: '客户端端口',
+ *    serverId: [WSSERVER_UUID1]
+ *  }
+ * }
+ * 2. 登出消息:
+ * {
+ *  type:'logout'
+ *  _sys: {
+ *    ip: '客户端IP',
+ *    port: '客户端端口',
+ *    serverId: [WSSERVER_UUID1]
+ *  }
  * }
  * 其他消息: //不必再带token,user,会自动将之前认证的userId填入消息体中.
  * {
@@ -45,7 +68,6 @@
  * }
  */
 import { v4 as uuidv4 } from 'uuid';
-import $r from '../../utils/redis';
 import sleep from '../../utils/sleep';
 import _debug from 'debug';
 const debug = _debug('app:ws:createServer');
@@ -66,7 +88,7 @@ export function createServer(opts = { port: 8080, processor: null }) {
   let serverId = uuidv4().replace(/-/g, ''); // 去掉'-'的uuid字符串
   debug('about to create websocket_server uuid=' + serverId);
 
-  serverHeatbeat(serverId);
+  serverHeatbeat({ serverId, processor });
   server.on('open', () => {
     debug('ok! websocket_server openend! uuid=', serverId);
   });
@@ -86,23 +108,25 @@ export function createServer(opts = { port: 8080, processor: null }) {
   return serverId;
 }
 
-async function serverHeatbeat(serverId) {
+async function serverHeatbeat(opts) {
+  let { serverId, processor } = opts;
   while (bServerHeatbeat) {
-    await $r().setexAsync(`SVR##${serverId}`, 60 * 5, new Date()); // 5分钟超时
+    await processor(
+      { type: '_svr_heartbeat', _sys: { serverId } },
+      MQ_SVR_KEY
+    );
     await sleep(60 * 1000); // 每隔1分钟刷新.
   }
 }
 
-async function handleServerClose(serverId) {
+async function handleServerClose(opts) {
   bServerHeatbeat = false;
+  let { serverId, processor } = opts;
   debug('websocket_server closed! uuid=' + serverId);
-  // 遍历authed_connections,得到所有的客户连接keys
-  let rkeys = await $r().keysAsync(`UC##*##${serverId}##*`);
-  for (let i = 0; i < rkeys.length; i++) {
-    await $r().delAsync(rkeys[i]);
-  }
-  await $r().delAsync(`SVR##${serverId}`);
-
+  await processor(
+    { type: '_svr_close', _sys: { serverId } },
+    MQ_SVR_KEY
+  );
   // 清空connections
   client_connections = {};
 }
@@ -215,8 +239,9 @@ async function handleClientMessage(message, opts) {
   // });
 }
 
-export function sendClientMessage(message, opts = { ip: '', port: 0 }) {
-  let { ip, port } = opts;
+export function sendClientMessage(message) {
+  let { _sys, ...msg } = message;
+  let { ip, port } = _sys;
   if (!ip || !port) {
     debug('error! no ip or port!');
     return false;
@@ -228,8 +253,8 @@ export function sendClientMessage(message, opts = { ip: '', port: 0 }) {
     debug('error! ws is null!', { ip, port });
     return false;
   }
-  let strmsg = JSON.stringify(message);
-  debug('sendClientMessage', strmsg, opts);
+  let strmsg = JSON.stringify(msg);
+  debug('sendClientMessage', message);
   ws.send(strmsg);
   return true;
 }

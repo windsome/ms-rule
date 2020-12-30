@@ -40,10 +40,6 @@ function wrapOps() {
 
 // 创建services
 export default function createService() {
-  let redisUrl = config.redis && config.redis.url;
-  if (!redisUrl) {
-    throw new Error('cfg: no redis.url!');
-  }
   let port = config.websocket && config.websocket.port;
   if (!port) {
     throw new Error('cfg: no websocket.port!');
@@ -53,16 +49,19 @@ export default function createService() {
     throw new Error('cfg: no config.mq!');
   }
 
-  // 初始化redis, 供smscode, wxmpState缓存使用
-  initRedis(redisUrl);
-  // 初始化依赖的微服务 ms-wxmp
+  debug('初始化依赖的微服务');
   jaysonClientInit(config.ms);
 
+  debug('初始化MQ发送器,用来将消息发往ms-ctwing服务');
   let sender = createMqTransmitter({
     url: mqcfg.url,
     exchange: mqcfg.exchange
   }); // 得到发送往MQ的发送器.
+  debug('初始化websocket服务器');
   let serverId = createWebsocketServer({ port, processor: sender });
+  debug(
+    '创建MQ接收器,接收来自业务处理服务器发送过来的消息,通过websocket发送给客户端'
+  );
   createMqReceiver({
     url: mqcfg.url,
     exchange: mqcfg.exchange,
