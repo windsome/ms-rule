@@ -148,9 +148,9 @@ function handleNewClientConnection(ws, req, opts) {
   debug('new client is arrive and connect!', clientName);
   ws.on(
     'close',
-    async () => await handleClientClose({ ip, port, ws, serverId })
+    async () => await handleClientClose({ ip, port, serverId, processor })
   );
-  ws.on('error', error => handleClientError({ ip, port, ws, error }));
+  ws.on('error', error => handleClientError({ ip, port, error }));
 
   // 设置事件
   ['open', 'ping', 'pong', 'unexpected-response', 'upgrade'].map(it => {
@@ -184,7 +184,7 @@ function handleNewClientConnection(ws, req, opts) {
 async function handleClientClose(opts) {
   let { ip, port, serverId, processor } = opts;
   // 删除与登录有关内存键值及redis中键值.
-  result = await processor(
+  await processor(
     { type: '_connection_close', _sys: { serverId, ip, port } },
     MQ_SVR_KEY
   );
