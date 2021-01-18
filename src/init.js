@@ -1,11 +1,7 @@
 import _debug from 'debug';
-const debug = _debug('app:mainserver');
+const debug = _debug('app:init');
 import 'isomorphic-fetch';
 import config from './config';
-let packageJson = require('../package.json');
-import { EM } from './Errcode';
-import { initRedis } from './utils/redis';
-import { default as ops } from './mw';
 import { init as jaysonClientInit } from './utils/jaysonClient';
 import {
   createServer as createWebsocketServer,
@@ -14,32 +10,7 @@ import {
   sendClientMessage
 } from './mw';
 
-debug('SOFTWARE VERSION:', packageJson.name, packageJson.version);
-debug('CONFIG NAME:', config.name);
-
-function wrapOps() {
-  let result = {};
-  let names = Object.getOwnPropertyNames(ops);
-  for (let i = 0; i < names.length; i++) {
-    let name = names[i];
-    let func = ops[name];
-    result[name] = async function(args) {
-      try {
-        debug(`run ${name}:`, args);
-        return await func(...args);
-      } catch (e) {
-        let errcode = e.errcode || -1;
-        let message = EM[errcode] || e.message || '未知错误';
-        console.error(e);
-        return { errcode, message, xOrigMsg: e.message };
-      }
-    };
-  }
-  return result;
-}
-
-// 创建services
-export default function createService() {
+export default async function init() {
   let wscfg = config.websocket;
   if (!wscfg) {
     throw new Error('cfg: no config.websocket!');
@@ -69,5 +40,5 @@ export default function createService() {
     processor: sendClientMessage
   });
 
-  return wrapOps();
+  debug('初始化完成');
 }
