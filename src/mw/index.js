@@ -1,8 +1,10 @@
-import { sendClientMessage } from './ws/createServer';
+import { createRule, updateRule, removeRule } from './restful/rule';
+
+export { msgProcessor } from './rules/msgProcessor';
 export { createServer, sendClientMessage } from './ws/createServer';
-export { createMqReceiver } from './mq/receiver';
-export { createMqTransmitter } from './mq/transmitter';
 
 export default {
-  sendClientMessage
+  createRule,
+  updateRule,
+  removeRule
 };

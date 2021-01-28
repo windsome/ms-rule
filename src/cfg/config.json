@@ -1,19 +1,36 @@
 {
-  "name": "websocket服务",
-  "description": "websocket消息中转服务,不涉及任何业务逻辑,只有连接管理,不需要redis",
-  "server_port": 3106,
+  "name": "rules规则微服务",
+  "description": "规则处理服务,接收设备数据变化/时间变化/定时器变化等消息,计算相应规则,触发相应事件,根据事件发送进行设备控制/报警等",
+  "server_port": 3107,
   "domain": "m.h5ren.com",
-  "websocket": {
-    "port": 3801,
-    "heartbeat_timeout": 60000
-  },
   "mq": {
     "type": "rabbitmq",
     "url": "amqp://guest:guest@localhost:5672",
-    "exchange": "topic_im",
-    "_key_consumer":"im.wsserver.[serverId]",
-    "_key_sender": "im.processor"
+    "exchange": "topic_iot",
+    "key_consumer": "msg.dataReport",
+    "_key_sender": "*无,不发送,只从ctwingiot下rabbitmq接收设备变化消息*"
   },
   "ms": {
+    "iotdevice": {
+      "full": "createProduct,getProduct,getProducts,updateProduct,removeProduct,createDevice,getDevice,getDevices,updateDevice,removeDevice,createCommand,getCommand,getCommands,updateCommand,removeCommand,cacnelCommand,createMessage,getMessage,getMessages,updateMessage,removeMessage,createApp,getApp,getApps,updateApp,removeApp",
+      "ops": [
+        "getProduct",
+        "getDevice",
+        "getDevices",
+        "getRules",
+        "createRule",
+        "updateRule"
+      ],
+      "protocol": "tcp",
+      "host": "localhost",
+      "port": 3103
+    },
+    "ctwingiot": {
+      "full": "createProduct,updateProduct,removeProduct,createDevice,updateDevice,removeDevice,createCommand,cancelCommand",
+      "ops": ["createCommand"],
+      "protocol": "tcp",
+      "host": "localhost",
+      "port": 3104
+    }
   }
 }

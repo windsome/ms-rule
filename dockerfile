@@ -8,6 +8,6 @@ RUN ls -R /var/www
 #RUN cd /var/www && npm install
 ADD node_modules /var/www/node_modules
 #COPY node_modules /var/www/node_modules
-EXPOSE 3106
+EXPOSE 3107
 WORKDIR /var/www/
 CMD DEBUG="app:*" node sdist
