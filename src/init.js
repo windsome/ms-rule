@@ -7,35 +7,23 @@ import { msgProcessor } from './mw';
 import { createMqReceiver, createMqTransmitter } from './utils/amq';
 
 export default async function init() {
-  // let wscfg = config.websocket;
-  // if (!wscfg) {
-  //   throw new Error('cfg: no config.websocket!');
-  // }
-  let mqcfg = config.mq;
-  if (!mqcfg) {
+  let mqiot = config.mqiot;
+  if (!mqiot) {
     throw new Error('cfg: no config.mq!');
   }
 
   debug('初始化依赖的微服务');
   jaysonClientInit(config.ms);
 
-  // debug('初始化MQ发送器,用来将消息发往ms-ctwing服务');
-  // let sender = createMqTransmitter({
-  //   url: mqcfg.url,
-  //   exchange: mqcfg.exchange
-  // }); // 得到发送往MQ的发送器.
-  // debug('初始化websocket服务器');
-  // let serverId = createWebsocketServer({ ...wscfg, processor: sender });
-  debug(
-    '创建MQ接收器,接收来自业务处理服务器发送过来的消息,通过websocket发送给客户端'
-  );
+  debug('创建MQ接收器,接收来自topic_iot的msg.dataReport消息');
   await createMqReceiver({
-    url: mqcfg.url,
-    exchange: mqcfg.exchange,
-    key: mqcfg.key_consumer,
+    url: mqiot.url,
+    exchange: mqiot.exchange,
+    key: mqiot.key_consumer,
     processor: msgProcessor
   });
 
+  debug('测试消息处理过程');
   await msgProcessor(
     JSON.stringify({
       _id: '5ffd331a2222222222000001',

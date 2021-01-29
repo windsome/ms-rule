@@ -22,10 +22,37 @@ function genRules(dbResult) {
 async function getDevice(_id) {
   // 获取单个设备
   let item = await $rpc('iotdevice').getDevice(_id);
-  debug('getDevice', _id, JSON.stringify(item));
+  // debug('getDevice', _id, JSON.stringify(item));
   return item;
 }
 
+/**
+ * 将event组装成command
+ * command为{device, product, platform, desc: {
+ *    content: {
+ *      dataType,
+ *      payload: {
+ *        [属性名1]:属性值1
+ *        [属性名2]:属性值2
+ *      }
+ *    }
+ *  }
+ * }
+ * @param {json} event rule记录中的output字段,
+ * 格式为: { type, params: {
+ *    _id:[设备_id],
+ *    [属性名1]:属性值1,
+ *    [属性名2]:属性值2
+ *  }
+ * }
+ * 如: {
+ *     type: 'evt_alarm_issued',
+ *     params: {
+ *       _id: '5ffd331a2222222222000004', //报警器_id
+ *       content: JSON.stringify({phone: '您的设备出了xxx故障',weixin: '您的设备出了xxx故障,请访问http://xxx.xxx',sms: '您的设备出了xxx故障'})
+ *     }
+ *   }
+ */
 async function sendEvent(event) {
   // 获取目标设备_id
   let params = (event && event.params) || {};
@@ -33,10 +60,27 @@ async function sendEvent(event) {
   if (_id) {
     // args 为需要设置的属性内容,即command内容
     let device = await getDevice(_id);
+    if (!device) {
+      debug('error! not find device._id=' + _id);
+      return false;
+    }
+    // debug('转换event为command');
+
     // 发送command
     let platform = device.platform;
     if (platform == 'ctwing') {
-      await $rpc('ctwingiot').createCommand({ device: _id, ...args });
+      await $rpc('ctwingiot').createCommand({ device: _id, platform, ...args });
+    } else if (platform == 'yihong') {
+      await $rpc('simulator').createCommand({
+        device: _id,
+        platform,
+        desc: { content: { payload: args } }
+      });
+    } else {
+      debug(
+        'error! not support platform of device!' + JSON.stringify(device),
+        JSON.stringify(event)
+      );
     }
   }
 }

@@ -11,12 +11,9 @@
     "isomorphic-fetch": "^3.0.0",
     "jayson": "^3.1.1",
     "json-rules-engine": "^6.0.0",
-    "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
-    "redis": "^3.0.2",
-    "uuid": "^8.3.2",
-    "ws": "^7.4.1"
+    "redis": "^3.0.2"
   },
   "devDependencies": {
     "apidoc-contenttype-plugin": "git+https://github.com/koko-ng/apidoc-contentType-plugin.git",
