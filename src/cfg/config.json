@@ -19,7 +19,8 @@
         "getDevices",
         "getRules",
         "createRule",
-        "updateRule"
+        "updateRule",
+        "removeRule"
       ],
       "protocol": "tcp",
       "host": "localhost",
