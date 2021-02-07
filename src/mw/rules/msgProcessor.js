@@ -16,7 +16,7 @@ function genRules(dbResult) {
   return result.map(id => {
     let entity = dbRule[id];
     let conditions = entity.input || {};
-    let event = { type: 'evt_device', ...(entity.output || {}) };
+    let event = { type: 'evt_device', params: entity.output };
     return { conditions, event };
   });
 }
@@ -49,23 +49,25 @@ async function getDevice(_id) {
  * }
  * 如: {
  *     type: 'evt_device',
- *     '5ffd331a2222222222000004': {
- *       content: JSON.stringify({phone: '您的设备出了xxx故障',weixin: '您的设备出了xxx故障,请访问http://xxx.xxx',sms: '您的设备出了xxx故障'})
- *       [属性名]:[属性值]
- *     },
- *     '5ffd331a2222222222000003': {
- *       content: JSON.stringify({phone: '您的设备出了xxx故障',weixin: '您的设备出了xxx故障,请访问http://xxx.xxx',sms: '您的设备出了xxx故障'})
- *       [属性名]:[属性值]
+ *     params: {
+ *      '5ffd331a2222222222000004': {
+ *        content: JSON.stringify({phone: '您的设备出了xxx故障',weixin: '您的设备出了xxx故障,请访问http://xxx.xxx',sms: '您的设备出了xxx故障'})
+ *        [属性名]:[属性值]
+ *      },
+ *      '5ffd331a2222222222000003': {
+ *        content: JSON.stringify({phone: '您的设备出了xxx故障',weixin: '您的设备出了xxx故障,请访问http://xxx.xxx',sms: '您的设备出了xxx故障'})
+ *        [属性名]:[属性值]
+ *      }
  *     }
  *   }
  */
 async function sendEvent(event) {
   // 获取目标设备_id
-  let { type, ...rest } = event;
-  let ids = Object.getOwnPropertyNames(rest);
+  let { type, params } = event;
+  let ids = Object.getOwnPropertyNames(params);
   for (let i = 0; i < ids.length; i++) {
     let _id = ids[i];
-    let content = rest[_id] || {};
+    let content = params[_id] || {};
     try {
       // 查找设备信息
       let device = await getDevice(_id);
@@ -121,6 +123,15 @@ function initEngine(rules) {
   engine.addFact('$_CURRENT_TIME', function(params, almanac) {
     return new Date();
   });
+
+  engine.addOperator(
+    'equals',
+    (factValue, jsonValue) => factValue == jsonValue
+  );
+  engine.addOperator(
+    'notEquals',
+    (factValue, jsonValue) => factValue != jsonValue
+  );
   engine.addOperator('hourOfTimeBetween', (factValue, jsonValue) => {
     debug(
       'hourOfTimeBetween',
