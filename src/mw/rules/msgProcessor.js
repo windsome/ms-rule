@@ -15,7 +15,9 @@ function genRules(dbResult) {
   // 遍历规则,得到处理后的规则列表.
   return result.map(id => {
     let entity = dbRule[id];
-    return { conditions: entity.input, event: entity.output };
+    let conditions = entity.input || {};
+    let event = { type: 'evt_device', ...(entity.output || {}) };
+    return { conditions, event };
   });
 }
 
@@ -46,41 +48,55 @@ async function getDevice(_id) {
  *  }
  * }
  * 如: {
- *     type: 'evt_alarm_issued',
- *     params: {
- *       _id: '5ffd331a2222222222000004', //报警器_id
+ *     type: 'evt_device',
+ *     '5ffd331a2222222222000004': {
  *       content: JSON.stringify({phone: '您的设备出了xxx故障',weixin: '您的设备出了xxx故障,请访问http://xxx.xxx',sms: '您的设备出了xxx故障'})
+ *       [属性名]:[属性值]
+ *     },
+ *     '5ffd331a2222222222000003': {
+ *       content: JSON.stringify({phone: '您的设备出了xxx故障',weixin: '您的设备出了xxx故障,请访问http://xxx.xxx',sms: '您的设备出了xxx故障'})
+ *       [属性名]:[属性值]
  *     }
  *   }
  */
 async function sendEvent(event) {
   // 获取目标设备_id
-  let params = (event && event.params) || {};
-  let { _id, ...args } = params;
-  if (_id) {
-    // args 为需要设置的属性内容,即command内容
-    let device = await getDevice(_id);
-    if (!device) {
-      debug('error! not find device._id=' + _id);
-      return false;
-    }
-    // debug('转换event为command');
+  let { type, ...rest } = event;
+  let ids = Object.getOwnPropertyNames(rest);
+  for (let i = 0; i < ids.length; i++) {
+    let _id = ids[i];
+    let content = rest[_id] || {};
+    try {
+      // 查找设备信息
+      let device = await getDevice(_id);
+      if (!device) {
+        debug('error! not find device._id=' + _id);
+        return false;
+      }
+      // debug('转换event为command');
 
-    // 发送command
-    let platform = device.platform;
-    if (platform == 'ctwing') {
-      await $rpc('ctwingiot').createCommand({ device: _id, platform, ...args });
-    } else if (platform == 'yihong') {
-      await $rpc('simulator').createCommand({
-        device: _id,
-        platform,
-        desc: { content: { payload: args } }
-      });
-    } else {
-      debug(
-        'error! not support platform of device!' + JSON.stringify(device),
-        JSON.stringify(event)
-      );
+      // 发送command
+      let platform = device.platform;
+      if (platform == 'ctwing') {
+        await $rpc('ctwingiot').createCommand({
+          device: _id,
+          platform,
+          content
+        });
+      } else if (platform == 'yihong') {
+        await $rpc('simulator').createCommand({
+          device: _id,
+          platform,
+          content
+        });
+      } else {
+        debug(
+          'error! not support platform of device!' + JSON.stringify(device),
+          JSON.stringify(content)
+        );
+      }
+    } catch (error) {
+      debug('error!', error);
     }
   }
 }
@@ -106,7 +122,7 @@ function initEngine(rules) {
     return new Date();
   });
   engine.addOperator('hourOfTimeBetween', (factValue, jsonValue) => {
-    console.log(
+    debug(
       'hourOfTimeBetween',
       factValue,
       jsonValue,
@@ -141,7 +157,11 @@ export async function msgProcessor(strmsg) {
       if (engine) {
         // 得到触发的event列表
         let { events } = await engine.run(payload);
-        debug('rule engine result events:', JSON.stringify(rules), events);
+        debug(
+          'rule engine result events:',
+          JSON.stringify(rules),
+          JSON.stringify(events)
+        );
 
         // 将event转换为command,发送到目标设备
         for (let i = 0; i < events.length; i++) {

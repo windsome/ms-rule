@@ -42,6 +42,10 @@ dataReport: {_id: 'deviceId', payload: {...}}
         }]
     },
     event: {
-        type: 'temperature normal'
+        type: 'evt_device',
+        '5ffd331a2222222222000004': {
+            content: JSON.stringify({phone: '您的设备出了xxx故障',weixin: '您的设备出了xxx故障,请访问http://xxx.xxx',sms: '您的设备出了xxx故障'})
+            [属性名]:[属性值]
+        }
     }
 }
