@@ -6,7 +6,7 @@ import { Engine } from 'json-rules-engine';
 import { $rpc } from '../../utils/jaysonClient';
 
 function genRules(dbResult) {
-  debug('genRules', dbResult);
+  // debug('genRules', JSON.stringify(dbResult));
   if (!dbResult) return null;
   let { result, entities } = dbResult;
   if (!result || !entities) return null;
@@ -16,7 +16,10 @@ function genRules(dbResult) {
   return result.map(id => {
     let entity = dbRule[id];
     let conditions = entity.input || {};
-    let event = { type: 'evt_device', params: entity.output };
+    let output = entity.output || {};
+    let appinfo = entity.appinfo || {};
+    appinfo = { ...appinfo, rule: id };
+    let event = { type: 'evt_device', params: { ...output, appinfo } };
     return { conditions, event };
   });
 }
@@ -64,10 +67,12 @@ async function getDevice(_id) {
 async function sendEvent(event) {
   // 获取目标设备_id
   let { type, params } = event;
-  let ids = Object.getOwnPropertyNames(params);
+  let { appinfo, ...restparams } = params || {};
+  let ids = Object.getOwnPropertyNames(restparams);
   for (let i = 0; i < ids.length; i++) {
     let _id = ids[i];
-    let content = params[_id] || {};
+    // 设备_id长度为24,如果非此长度,则表示不是设备.
+    let content = restparams[_id] || {};
     try {
       // 查找设备信息
       let device = await getDevice(_id);
@@ -83,13 +88,15 @@ async function sendEvent(event) {
         await $rpc('ctwingiot').createCommand({
           device: _id,
           platform,
-          content
+          content,
+          appinfo
         });
       } else if (platform == 'yihong') {
         await $rpc('simulator').createCommand({
           device: _id,
           platform,
-          content
+          content,
+          appinfo
         });
       } else {
         debug(
@@ -163,16 +170,13 @@ export async function msgProcessor(strmsg) {
       // 从rule表中找到依赖此device._id的规则列表
       let ret = await getRules({ where: { depend: _id }, limit: 100 });
       let rules = genRules(ret);
+      debug(`genRules(${rules.length}):`, JSON.stringify(rules));
       // 初始化RuleEngine,
       let engine = initEngine(rules);
       if (engine) {
         // 得到触发的event列表
         let { events } = await engine.run(payload);
-        debug(
-          'rule engine result events:',
-          JSON.stringify(rules),
-          JSON.stringify(events)
-        );
+        debug(`engine.run() events(${events.length}):`, JSON.stringify(events));
 
         // 将event转换为command,发送到目标设备
         for (let i = 0; i < events.length; i++) {
