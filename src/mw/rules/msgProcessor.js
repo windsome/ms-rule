@@ -170,21 +170,26 @@ export async function msgProcessor(strmsg) {
       // 从rule表中找到依赖此device._id的规则列表
       let ret = await getRules({ where: { depend: _id }, limit: 100 });
       let rules = genRules(ret);
-      debug(`genRules(${rules.length}):`, JSON.stringify(rules));
-      // 初始化RuleEngine,
-      let engine = initEngine(rules);
-      if (engine) {
-        // 得到触发的event列表
-        let { events } = await engine.run(payload);
-        debug(`engine.run() events(${events.length}):`, JSON.stringify(events));
-
-        // 将event转换为command,发送到目标设备
-        for (let i = 0; i < events.length; i++) {
-          await sendEvent(events[i]);
+      if (rules) {
+        debug(`genRules(${rules.length}):`, JSON.stringify(rules));
+        // 初始化RuleEngine,
+        let engine = initEngine(rules);
+        if (engine) {
+          // 得到触发的event列表
+          let { events } = await engine.run(payload);
+          if (events) {
+            debug(
+              `engine.run() events(${events.length}):`,
+              JSON.stringify(events)
+            );
+            // 将event转换为command,发送到目标设备
+            for (let i = 0; i < events.length; i++) {
+              await sendEvent(events[i]);
+            }
+          }
         }
       }
     }
-
     debug('+msgProcessor ok!');
     return true;
   } catch (error) {
