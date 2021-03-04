@@ -1,32 +1,120 @@
 import _debug from 'debug';
 const debug = _debug('app:rules:msgProcessor');
-
-import { getRules } from '../restful/rule';
 import { Engine } from 'json-rules-engine';
 import { $rpc } from '../../utils/jaysonClient';
+import { itemListOfRetrieve } from '../restful/_commonOps';
+import type from '../../utils/type';
+import uniq from 'lodash/uniq';
+import uniqWith from 'lodash/uniqWith';
+import cloneDeep from 'lodash/cloneDeep';
+import config from '../../config';
 
-function genRules(dbResult) {
-  // debug('genRules', JSON.stringify(dbResult));
-  if (!dbResult) return null;
-  let { result, entities } = dbResult;
-  if (!result || !entities) return null;
-  let dbRule = entities.rule;
-  if (!dbRule) return null;
-  // 遍历规则,得到处理后的规则列表.
-  return result.map(id => {
-    let entity = dbRule[id];
-    let conditions = entity.input || {};
-    let output = entity.output || {};
-    let appinfo = entity.appinfo || {};
-    appinfo = { ...appinfo, rule: id };
-    let event = { type: 'evt_device', params: { ...output, appinfo } };
+export function replaceGroupIdWithDeviceId(input, gid, did) {
+  if (!input) return null;
+  let keys = Object.getOwnPropertyNames(input);
+  for (let i = 0; i < keys.length; i++) {
+    let key = keys[i];
+    let value = input[key];
+    if (key == 'params') {
+      let id = value && value['_id'];
+      if (id == gid) {
+        value['_id'] = did;
+      }
+    } else if (type(value) === 'array') {
+      for (let j = 0; j < value.length; j++) {
+        value[j] = replaceGroupIdWithDeviceId(value[j], gid, did);
+      }
+    } else if (type(value) === 'object') {
+      input[key] = replaceGroupIdWithDeviceId(value, gid, did);
+    }
+  }
+  return input;
+}
+
+async function findRulesByDeviceId(_id) {
+  // 数据源1: 获取设备相关rule
+  let ret1 = await $rpc('iot1gapis').getRules(
+    {},
+    { where: { depend: _id }, limit: 100 }
+  );
+  let rules1 = itemListOfRetrieve(ret1);
+
+  // 数据源2: 获取设备所在分组相关rule
+  // 1. 获取所有此设备_id对应的userdevice列表.默认最多100个用户使用此设备,最多找100条.
+  let ret2 = await $rpc('iot1gapis').getUserdevices(
+    {},
+    { where: { device: _id }, limit: 100 }
+  );
+  let udList = itemListOfRetrieve(ret2);
+  // 2. 根据userdevice.appinfo.groups字段得到所有组.
+  let groups = [];
+  for (let i = 0; i < udList.length; i++) {
+    let ud = udList[i];
+    let groups1 = (ud.appinfo && ud.appinfo.groups) || [];
+    groups.concat(groups1);
+  }
+  let groupList = uniq(groups);
+  // 3. 获取所有包含此组的rule列表,如果是组规则,则此规则中只允许存在一个组.
+  // 否则,有两个组存在时,满足了其中一个条件,还需要遍历另外一个组中所有成员,判断是否满足条件.不合理.
+  let rules2 = [];
+  for (let i = 0; i < groupList.length; i++) {
+    let gid = groupList[i];
+    let ret3 = await $rpc('iot1gapis').getRules(
+      {},
+      { where: { depend: gid }, limit: 100 }
+    );
+    let rules3 = itemListOfRetrieve(ret3);
+    let rules4 = rules3.map(rule => {
+      return {
+        ...rule,
+        input: replaceGroupIdWithDeviceId(cloneDeep(rule.input), gid, _id)
+      };
+    });
+    // 将rule中组id,替换成设备id
+    rules2 = [...rules2, ...rules4];
+  }
+
+  // 合并所有rule.
+  let rules = [...rules1, ...rules2];
+  rules = uniqWith(rules, (a, b) => a._id == b._id);
+  return rules;
+}
+
+/**
+ * 转换规则.
+ * @param {*} rules 数据库表Rule格式的规则列表
+ * @param {*} triggerDeviceId 触发规则的设备id
+ */
+function transformRules(rules, triggerDeviceId) {
+  if (!rules) return null;
+  if (rules.length < 1) return null;
+
+  let cfgAppInfo = config.appinfo || {};
+  let appid = cfgAppInfo.appid;
+  let appname = cfgAppInfo.appname;
+
+  return rules.map(rule => {
+    let conditions = rule.input || {};
+    let output = rule.output || {};
+    let type = rule.type || 'device';
+    let user = rule.owner;
+    // let appinfo = rule.appinfo || {};
+    // appinfo = { ...appinfo, rule: rule._id, trigger: triggerDeviceId };
+    let appinfo = {
+      appid,
+      appname,
+      user,
+      rule: rule._id,
+      trigger: triggerDeviceId
+    };
+    let event = { type: 'evt_' + type, params: { ...output, appinfo } };
     return { conditions, event };
   });
 }
 
 async function getDevice(_id) {
   // 获取单个设备
-  let item = await $rpc('iotdevice').getDevice(_id);
+  let item = await $rpc('iot1gapis').getDevice({}, _id);
   // debug('getDevice', _id, JSON.stringify(item));
   return item;
 }
@@ -84,26 +172,16 @@ async function sendEvent(event) {
 
       // 发送command
       let platform = device.platform;
-      if (platform == 'ctwing') {
-        await $rpc('ctwingiot').createCommand({
+      await $rpc('iot1gapis').createCommand(
+        {},
+        {
           device: _id,
+          type: 1, //规则触发.
           platform,
           content,
           appinfo
-        });
-      } else if (platform == 'yihong') {
-        await $rpc('simulator').createCommand({
-          device: _id,
-          platform,
-          content,
-          appinfo
-        });
-      } else {
-        debug(
-          'error! not support platform of device!' + JSON.stringify(device),
-          JSON.stringify(content)
-        );
-      }
+        }
+      );
     } catch (error) {
       debug('error!', error);
     }
@@ -168,10 +246,10 @@ export async function msgProcessor(strmsg) {
     // let _id = params && params._id;
     if (_id) {
       // 从rule表中找到依赖此device._id的规则列表
-      let ret = await getRules({ where: { depend: _id }, limit: 100 });
-      let rules = genRules(ret);
+      let rulesInDb = await findRulesByDeviceId(_id);
+      let rules = transformRules(rulesInDb, _id);
       if (rules) {
-        debug(`genRules(${rules.length}):`, JSON.stringify(rules));
+        debug(`transformRules(${rules.length}):`, JSON.stringify(rules));
         // 初始化RuleEngine,
         let engine = initEngine(rules);
         if (engine) {
