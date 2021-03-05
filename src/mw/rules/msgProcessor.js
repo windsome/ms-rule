@@ -2,7 +2,7 @@ import _debug from 'debug';
 const debug = _debug('app:rules:msgProcessor');
 import { Engine } from 'json-rules-engine';
 import { $rpc } from '../../utils/jaysonClient';
-import { itemListOfRetrieve } from '../restful/_commonOps';
+import { itemListOfRetrieve } from '../../utils/jaysonRestful';
 import type from '../../utils/type';
 import uniq from 'lodash/uniq';
 import uniqWith from 'lodash/uniqWith';
@@ -89,9 +89,7 @@ function transformRules(rules, triggerDeviceId) {
   if (!rules) return null;
   if (rules.length < 1) return null;
 
-  let cfgAppInfo = config.appinfo || {};
-  let appid = cfgAppInfo.appid;
-  let appname = cfgAppInfo.appname;
+  let appauth = config.appauth || {};
 
   return rules.map(rule => {
     let conditions = rule.input || {};
@@ -101,13 +99,14 @@ function transformRules(rules, triggerDeviceId) {
     // let appinfo = rule.appinfo || {};
     // appinfo = { ...appinfo, rule: rule._id, trigger: triggerDeviceId };
     let appinfo = {
-      appid,
-      appname,
       user,
       rule: rule._id,
       trigger: triggerDeviceId
     };
-    let event = { type: 'evt_' + type, params: { ...output, appinfo } };
+    let event = {
+      type: 'evt_' + type,
+      params: { ...output, appauth, appinfo }
+    };
     return { conditions, event };
   });
 }
@@ -155,7 +154,7 @@ async function getDevice(_id) {
 async function sendEvent(event) {
   // 获取目标设备_id
   let { type, params } = event;
-  let { appinfo, ...restparams } = params || {};
+  let { appauth, appinfo, ...restparams } = params || {};
   let ids = Object.getOwnPropertyNames(restparams);
   for (let i = 0; i < ids.length; i++) {
     let _id = ids[i];
@@ -172,16 +171,13 @@ async function sendEvent(event) {
 
       // 发送command
       let platform = device.platform;
-      await $rpc('iot1gapis').createCommand(
-        {},
-        {
-          device: _id,
-          type: 1, //规则触发.
-          platform,
-          content,
-          appinfo
-        }
-      );
+      await $rpc('iot1gapis').createCommand(appauth, {
+        device: _id,
+        type: 1, //规则触发.
+        platform,
+        content,
+        appinfo
+      });
     } catch (error) {
       debug('error!', error);
     }

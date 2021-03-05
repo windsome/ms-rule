@@ -10,11 +10,11 @@
     "key_consumer": "msg.dataReport",
     "_key_sender": "*无,不发送,只从ctwingiot下rabbitmq接收设备变化消息*"
   },
-  "appinfo": {
+  "appauth": {
     "appid": "5ffd331a3333333333000001",
-    "appname": "rootapp",
-    "appkey": "kB2igOyFWb",
-    "appsecret": "4ED2A891D23E1DA8B9F34FE73305C331B9D965B5"
+    "name": "rootapp",
+    "key": "kB2igOyFWb",
+    "secret": "4ED2A891D23E1DA8B9F34FE73305C331B9D965B5"
   },
   "ms": {
     "iot1gapis": {
