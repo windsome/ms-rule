@@ -1,5 +1,30 @@
 require('babel-register');
-let func = require('./msgProcessor').replaceGroupIdWithDeviceId;
+let type = require('../../utils/type').default;
+let cloneDeep = require('lodash/cloneDeep');
+
+// let func = require('./msgProcessor').replaceGroupIdWithDeviceId;
+function replaceGroupIdWithDeviceId(input, gid, did) {
+  if (!input) return null;
+  let keys = Object.getOwnPropertyNames(input);
+  for (let i = 0; i < keys.length; i++) {
+    let key = keys[i];
+    let value = input[key];
+    if (key == 'params') {
+      let id = value && value['_id'];
+      if (id == gid) {
+        value['_id'] = did;
+      }
+    } else if (type(value) === 'array') {
+      for (let j = 0; j < value.length; j++) {
+        value[j] = replaceGroupIdWithDeviceId(value[j], gid, did);
+      }
+    } else if (type(value) === 'object') {
+      input[key] = replaceGroupIdWithDeviceId(value, gid, did);
+    }
+  }
+  return input;
+}
+let func = replaceGroupIdWithDeviceId;
 
 let input = {
   all: [

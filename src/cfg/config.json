@@ -27,6 +27,8 @@
         "createRule",
         "updateRule",
         "removeRule",
+        "updateGroup",
+        "getGroup",
         "createCommand",
         "getUserdevices"
       ],
