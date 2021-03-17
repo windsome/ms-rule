@@ -35,6 +35,12 @@
       "protocol": "tcp",
       "host": "localhost",
       "port": 3113
+    },
+    "payment": {
+      "ops": ["useWallet", "getWallet"],
+      "protocol": "tcp",
+      "host": "localhost",
+      "port": 3110
     }
   }
 }

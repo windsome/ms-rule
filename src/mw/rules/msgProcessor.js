@@ -8,6 +8,7 @@ import uniqWith from 'lodash/uniqWith';
 // import type from '../../utils/type';
 // import cloneDeep from 'lodash/cloneDeep';
 import config from '../../config';
+import { checkWallet, useWallet } from './wallet';
 
 async function findGroupIdsOfDeviceId(_id) {
   // 1. 获取所有此设备_id对应的userdevice列表.默认最多100个用户使用此设备,最多找100条.
@@ -178,15 +179,21 @@ async function sendEvent(event) {
       }
       // debug('转换event为command');
 
-      // 发送command
-      let platform = device.platform;
-      await $rpc('iot1gapis').createCommand(appauth, {
+      // 组装命令内容.
+      let cmdArgs = {
         device: _id,
         type: 1, //规则触发.
-        platform,
+        platform: device.platform,
         content,
         appinfo
-      });
+      };
+      // 如果是警报型的需要进行计费判断.
+      let result = await checkWallet(device, cmdArgs);
+      if (result) {
+        // 扣积分成功后发送command
+        await $rpc('iot1gapis').createCommand(appauth, cmdArgs);
+        await useWallet(device, cmdArgs);
+      }
     } catch (error) {
       debug('error!', error);
     }
