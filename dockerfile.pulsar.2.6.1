@@ -1,0 +1,9 @@
+# docker build -f dockerfile.pulsar.2.6.1 . -t windsome/node-pulsar:2.6.1
+FROM node:12.13.0
+WORKDIR /root/
+COPY makedocker/2.6.1/apache-pulsar-client.deb /root/
+COPY makedocker/2.6.1/apache-pulsar-client-dev.deb /root/
+RUN dpkg -i apache-pulsar-client.deb
+RUN dpkg -i apache-pulsar-client-dev.deb
+RUN rm apache-pulsar-client.deb
+RUN rm apache-pulsar-client-dev.deb

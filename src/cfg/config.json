@@ -3,22 +3,24 @@
   "description": "规则处理服务,接收设备数据变化/时间变化/定时器变化等消息,计算相应规则,触发相应事件,根据事件发送进行设备控制/报警等",
   "server_port": 3107,
   "domain": "m.h5ren.com",
-  "mqiot": {
-    "type": "rabbitmq",
-    "url": "amqp://guest:guest@localhost:5672",
-    "exchange": "topic_iot",
-    "key_consumer": "msg.dataReport",
-    "_key_sender": "*无,不发送,只从ctwingiot下rabbitmq接收设备变化消息*"
-  },
   "appauth": {
     "appid": "5ffd331a3333333333000001",
     "name": "rootapp",
     "key": "kB2igOyFWb",
     "secret": "4ED2A891D23E1DA8B9F34FE73305C331B9D965B5"
   },
+  "platmq": {
+    "_description": "从平台端pulsar-broker消费消息. topic模式为: msgpush/<平台用户ID>/<应用APP_ID>.",
+    "_serviceUrl": "pulsar://admin.h5ren.com:6650",
+    "_token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0LXVzZXIifQ.KCepkApIwUV3rDgnI7hqKk6Xv3I3rRBZCwtKWkQSIGw",
+    "serviceUrl": "pulsar://localhost:6650",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZmUzMWIxMzExMTExMTExMTEwMDAwMDEifQ.iGzqxmxjAWt-iFp4ChNnO0Tale_g0Ce1__eiRCDUvxs",
+    "topic": "msgpush/5fe31b131111111111000001/5ffd331a3333333333000001",
+    "subscription": "rule",
+    "subscriptionType": "Exclusive"
+  },
   "ms": {
     "iot1gapis": {
-      "full": "createProduct,getProduct,getProducts,updateProduct,removeProduct,createDevice,getDevice,getDevices,updateDevice,removeDevice,createCommand,getCommand,getCommands,updateCommand,removeCommand,cacnelCommand,createMessage,getMessage,getMessages,updateMessage,removeMessage,createApp,getApp,getApps,updateApp,removeApp",
       "ops": [
         "getProduct",
         "getDevice",

@@ -13,6 +13,7 @@
     "json-rules-engine": "^6.0.0",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
+    "pulsar-client": "1.2.0",
     "redis": "^3.0.2"
   },
   "devDependencies": {
