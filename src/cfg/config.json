@@ -9,14 +9,22 @@
     "key": "kB2igOyFWb",
     "secret": "4ED2A891D23E1DA8B9F34FE73305C331B9D965B5"
   },
-  "platmq": {
+  "platmq.dev.local": {
     "_description": "从平台端pulsar-broker消费消息. topic模式为: msgpush/<平台用户ID>/<应用APP_ID>.",
-    "_serviceUrl": "pulsar://admin.h5ren.com:6650",
-    "_token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0LXVzZXIifQ.KCepkApIwUV3rDgnI7hqKk6Xv3I3rRBZCwtKWkQSIGw",
+    "_env": "pulsar部署在本地,是本地测试环境(平台端也是本地测试环境)",
     "serviceUrl": "pulsar://localhost:6650",
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZmUzMWIxMzExMTExMTExMTEwMDAwMDEifQ.iGzqxmxjAWt-iFp4ChNnO0Tale_g0Ce1__eiRCDUvxs",
     "topic": "msgpush/5fe31b131111111111000001/5ffd331a3333333333000001",
-    "subscription": "rule",
+    "subscription": "rule-local",
+    "subscriptionType": "Exclusive"
+  },
+  "platmq": {
+    "_description": "从平台端pulsar-broker消费消息. topic模式为: msgpush/<平台用户ID>/<应用APP_ID>.",
+    "_env": "pulsar部署在阿里云,本地测试环境(平台端在阿里云上)",
+    "serviceUrl": "pulsar://admin.h5ren.com:6650",
+    "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0LXVzZXIifQ.KCepkApIwUV3rDgnI7hqKk6Xv3I3rRBZCwtKWkQSIGw",
+    "topic": "msgpush/5fe31b131111111111000001/5ffd331a3333333333000001",
+    "subscription": "rule-local",
     "subscriptionType": "Exclusive"
   },
   "ms": {
@@ -31,6 +39,7 @@
         "removeRule",
         "updateGroup",
         "getGroup",
+        "createSensordata",
         "createCommand",
         "getUserdevices"
       ],

@@ -18,7 +18,9 @@ export default async function init() {
   let mqPulsarPlat = new PulsarMq(config.platmq);
   mqPulsarPlat
     .consume(config.platmq.topic, {
-      processor: msgProcessor
+      processor: msgProcessor,
+      subscription: config.platmq.subscription,
+      subscriptionType: config.platmq.subscriptionType
     })
     .catch(error => {
       debug('error2! 出错退出重启!', error);

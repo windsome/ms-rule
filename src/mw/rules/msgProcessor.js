@@ -9,6 +9,7 @@ import uniqWith from 'lodash/uniqWith';
 // import cloneDeep from 'lodash/cloneDeep';
 import config from '../../config';
 import { checkWallet, useWallet } from './wallet';
+import insertToSensordata from './sensordata';
 
 async function findGroupIdsOfDeviceId(_id) {
   // 1. 获取所有此设备_id对应的userdevice列表.默认最多100个用户使用此设备,最多找100条.
@@ -258,6 +259,7 @@ export async function msgProcessor(strmsg) {
   let msgobj = null;
   try {
     msgobj = JSON.parse(strmsg);
+    await insertToSensordata(msgobj);
     let { _id, payload } = msgobj;
     // let _id = params && params._id;
     if (_id) {

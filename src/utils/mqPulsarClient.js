@@ -70,7 +70,7 @@ export async function consume(client, topic, opts) {
     debug(`consumer[${msgCount}] dataRetrieve: ${dataRetrieve}`);
     let result = null;
     try {
-      dataRetrieve = JSON.parse(dataRetrieve);
+      // dataRetrieve = JSON.parse(dataRetrieve);
       if (processor) {
         result = await processor(dataRetrieve);
       }
