@@ -23,20 +23,23 @@ dataReport: {_id: 'deviceId', payload: {...}}
 特殊facts: $_CURRENT_TIME 当前时间.
 
 ## rule
+### 设备联动处理规则
 {
     conditions: {
         "all/any": [{
-            fact: 'device_prop_temperature',
+            fact: 'device',
             params: {
                 _id: 'xxxx'
             },
+            path: '$.prop.temperature_1',
             operator: 'greaterThanInclusive',
             value: 10
         },{
-            fact: 'device_prop_temperature',
+            fact: 'group',
             params: {
                 _id: 'xxxx'
             },
+            path: '$.prop.temperature_1',
             operator: 'lessThan',
             value: 40
         }]
@@ -44,8 +47,51 @@ dataReport: {_id: 'deviceId', payload: {...}}
     event: {
         type: 'evt_device',
         '5ffd331a2222222222000004': {
-            content: JSON.stringify({phone: '您的设备出了xxx故障',weixin: '您的设备出了xxx故障,请访问http://xxx.xxx',sms: '您的设备出了xxx故障'})
+            reason_1: '温度小于10报警',
             [属性名]:[属性值]
         }
+    }
+}
+
+### 报警规则
+报警内容为: [rule.name][device.attribute]出问题了.
+{
+    conditions: {
+        "all/any": [{
+            fact: 'device',
+            params: {
+                _id: 'xxxx'
+            },
+            path: '$.prop.temperature_1',
+            operator: 'greaterThanInclusive',
+            value: 10
+        },{
+            fact: 'group',
+            params: {
+                _id: 'xxxx'
+            },
+            path: '$.prop.temperature_1',
+            operator: 'lessThan',
+            value: 40
+        }]
+    },
+    event: {
+        type: 'evt_alarm',
+        '5ffd331a2222222222000004': { // alarmcfg._id, 报警配置_id
+            name: '报警给王工,张工',
+            contacts:[
+                {_id, name:'王工', sms:'13661989491',phone:'13661989491',weixin:'xxxxx'},
+                {_id, name:'张工', sms:'13661989491',phone:'13661989491'},
+                {_id, name:'张工', sms:'13661989491'},
+            ]
+        },
+        '5ffd331a2222222222000005': { // alarmcfg._id, 报警配置_id
+            name: '报警给汪工,李工,姚工',
+            contacts:[
+                {_id, name:'汪工', sms:'13661989491',phone:'13661989491',weixin:'xxxxx'},
+                {_id, name:'李工', sms:'13661989491',phone:'13661989491'},
+                {_id, name:'姚工', sms:'13661989491'},
+            ]
+        },
     }
 }

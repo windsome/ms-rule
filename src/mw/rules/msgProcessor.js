@@ -163,7 +163,19 @@ async function getGroup(_id) {
  *   }
  */
 async function sendEvent(event) {
-  // 获取目标设备_id
+  // 根据event.type处理不同事件.
+  let evt_type = event && event.type;
+  if (evt_type == 'evt_device') {
+    return await sendDeviceEvent(event);
+  } else if (evt_type == 'evt_alarm') {
+    return await sendAlarmEvent(event);
+  } else {
+    debug('error! not support event.type=' + evt_type, JSON.stringify(event));
+  }
+}
+
+async function sendAlarmEvent(event) {
+  // 发送报警事件
   let { type, params } = event;
   let { appauth, appinfo, ...restparams } = params || {};
   let ids = Object.getOwnPropertyNames(restparams);
@@ -195,6 +207,39 @@ async function sendEvent(event) {
         await $rpc('iot1gapis').createCommand(appauth, cmdArgs);
         await useWallet(device, cmdArgs);
       }
+    } catch (error) {
+      debug('error!', error);
+    }
+  }
+}
+async function sendDeviceEvent(event) {
+  // 发送设备属性控制类型事件
+  // 获取目标设备_id
+  let { type, params } = event;
+  let { appauth, appinfo, ...restparams } = params || {};
+  let ids = Object.getOwnPropertyNames(restparams);
+  for (let i = 0; i < ids.length; i++) {
+    let _id = ids[i];
+    // 设备_id长度为24,如果非此长度,则表示不是设备.
+    let content = restparams[_id] || {};
+    try {
+      // 查找设备信息
+      let device = await getDevice(_id);
+      if (!device) {
+        debug('error! not find device._id=' + _id);
+        return false;
+      }
+      // debug('转换event为command');
+
+      // 组装命令内容.
+      let cmdArgs = {
+        device: _id,
+        type: 1, //规则触发.
+        platform: device.platform,
+        content,
+        appinfo
+      };
+      await $rpc('iot1gapis').createCommand(appauth, cmdArgs);
     } catch (error) {
       debug('error!', error);
     }
