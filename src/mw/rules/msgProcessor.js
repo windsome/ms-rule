@@ -167,7 +167,7 @@ async function sendEvent(event) {
   let evt_type = event && event.type;
   if (evt_type == 'evt_device') {
     return await sendDeviceEvent(event);
-  } else if (evt_type == 'evt_alarm') {
+  } else if (evt_type == 'evt_alarmer') {
     return await sendAlarmEvent(event);
   } else {
     debug('error! not support event.type=' + evt_type, JSON.stringify(event));
@@ -175,43 +175,33 @@ async function sendEvent(event) {
 }
 
 async function sendAlarmEvent(event) {
-  // 发送报警事件
+  // 发送报警事件, 需组织报警内容, 然后连同contacts,alarmcfgs一起调用apis的发送报警命令接口.
   let { type, params } = event;
-  let { appauth, appinfo, ...restparams } = params || {};
-  let ids = Object.getOwnPropertyNames(restparams);
-  for (let i = 0; i < ids.length; i++) {
-    let _id = ids[i];
-    // 设备_id长度为24,如果非此长度,则表示不是设备.
-    let content = restparams[_id] || {};
-    try {
-      // 查找设备信息
-      let device = await getDevice(_id);
-      if (!device) {
-        debug('error! not find device._id=' + _id);
-        return false;
-      }
-      // debug('转换event为command');
+  let { appauth, appinfo, contacts, ...alarmcfgs } = params || {};
+  let { rule: ruleId, trigger: deviceId } = appinfo || {};
 
-      // 组装命令内容.
-      let cmdArgs = {
-        device: _id,
-        type: 1, //规则触发.
-        platform: device.platform,
-        content,
-        appinfo
-      };
-      // 如果是警报型的需要进行计费判断.
-      let result = await checkWallet(device, cmdArgs);
-      if (result) {
-        // 扣积分成功后发送command
-        await $rpc('iot1gapis').createCommand(appauth, cmdArgs);
-        await useWallet(device, cmdArgs);
-      }
-    } catch (error) {
-      debug('error!', error);
+  try {
+    let rule = await $rpc('iot1gapis').getRule({}, ruleId);
+    if (!rule) {
+      debug('error sendAlarmEvent! not find rule._id=' + ruleId);
+      return false;
     }
+
+    // 构造alarm表记录.
+    let cmdArgs = {
+      name: rule.name,
+      owner: rule.owner,
+      device: deviceId,
+      rule: ruleId,
+      alarmcfgs,
+      contacts
+    };
+    await $rpc('iot1gapis').createAlarm({ user: rule.owner }, cmdArgs);
+  } catch (error) {
+    debug('error sendAlarmEvent!', error.message);
   }
 }
+
 async function sendDeviceEvent(event) {
   // 发送设备属性控制类型事件
   // 获取目标设备_id

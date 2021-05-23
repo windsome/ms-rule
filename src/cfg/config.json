@@ -33,6 +33,7 @@
         "getProduct",
         "getDevice",
         "getDevices",
+        "getRule",
         "getRules",
         "createRule",
         "updateRule",
@@ -41,17 +42,12 @@
         "getGroup",
         "createSensordata",
         "createCommand",
+        "createAlarm",
         "getUserdevices"
       ],
       "protocol": "tcp",
       "host": "localhost",
       "port": 3113
-    },
-    "payment": {
-      "ops": ["useWallet", "getWallet"],
-      "protocol": "tcp",
-      "host": "localhost",
-      "port": 3110
     }
   }
 }
